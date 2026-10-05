@@ -1,4 +1,4 @@
-# Replay brand guidelines
+# Replay brand guidelines -
 
 The Replay (Sunset HQ Corp.) brand guidelines as a static site, built by PIXELUP.
 
