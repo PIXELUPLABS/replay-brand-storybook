@@ -517,6 +517,12 @@ pre.code{background:var(--frame);border:1px dashed var(--line);padding:16px;font
 .mailbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:0 0 12px}
 .mailbar .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
 .mailbar .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;transition:color 150ms var(--ease-snap)}
+.chk:hover,.chk:has(input:checked){color:var(--text)}
+.chk input{appearance:none;-webkit-appearance:none;flex:none;display:inline-grid;place-content:center;width:14px;height:14px;margin:0;border:1px solid var(--line-2);border-radius:0;background:var(--frame);cursor:pointer;transition:background-color 150ms var(--ease-snap),border-color 150ms var(--ease-snap)}
+.chk input::before{content:"";width:7px;height:4px;border:solid var(--bg);border-width:0 0 1.5px 1.5px;transform:translateY(-1px) rotate(-45deg);opacity:0}
+.chk input:checked{background:var(--text);border-color:var(--text)}
+.chk input:checked::before{opacity:1}
 .mailstage{background:var(--stage);border:1px dashed var(--line);padding:clamp(12px,2.6vw,32px);overflow-x:auto}
 .mail-host{display:block;margin:0 auto;max-width:620px}
 .mail-host.sig{width:max-content;max-width:100%}
@@ -1091,26 +1097,29 @@ const EMAILS=[
     footer:["Reply to this email and your Replay team will pick it up.","Replay. Orderly wind-downs.","© 2026 Replay AI Corp."]},
   {id:"no-offer",label:"No offer",subject:"We won’t be making an offer for your data.",preheader:"Thanks for taking the time to go through the evaluation with us.",
     footer:["Reply to this email and it comes straight back to the person who sent it.","© 2026 Replay AI Corp."]}];
-let emTab=0, emMode="sample";
+let emTab=0, emMode="sample", emShow={header:true,greeting:true};
 function emailCard(t,o){
   const v=o.vars, a=o.base, H=o.head||EF.head, co=esc(v.company), url=esc(v.portal);
+  /* o.show turns the heading and the "Hi …" line off; the first line that's left takes over their top margin */
+  const show=o.show||{}, hdr=show.header!==false, grt=show.greeting!==false, mt=hdr?"20px":"0";
   const body=`font-family:${EF.body};font-size:16px;line-height:22px;letter-spacing:-0.48px;color:#646464`;
   const h1=(size,center)=>`<h1 class="rp-h1" style="margin:0;font-family:${H};font-weight:400;font-size:${size}px;line-height:${Math.round(size*1.1)}px;letter-spacing:${(-size*.04).toFixed(2)}px;color:#141518${center?";text-align:center":""}">`;
   const gap=h=>`<div style="height:${h}px;line-height:${h}px;font-size:0">&nbsp;</div>`;
   const rule=c=>`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px dashed ${c};font-size:1px;line-height:1px">&nbsp;</td></tr></table>`;
   const button=center=>`<table role="presentation" cellpadding="0" cellspacing="0" border="0"${center?' align="center"':""}><tr><td class="rp-btn" bgcolor="#000000" style="background:#000000;mso-padding-alt:14px 20px"><a href="${url}" target="_blank" style="display:inline-block;padding:14px 20px;font-family:${H};font-size:16px;line-height:16px;letter-spacing:0.16px;color:#ffffff;text-decoration:none">Open your portal</a></td></tr></table>`;
-  const hi=(m)=>`<p style="margin:${m};${body}">Hi <span style="color:#000000">${co},</span></p>`;
+  const head=(text,size)=>hdr?`${h1(size)}${text}</h1>`:"";
+  const hi=(m)=>grt?`<p style="margin:${m};${body}">Hi <span style="color:#000000">${co},</span></p>`:"";
   const thanks="Thanks for signing the data agreement. The next step is to start exporting your operating data from the providers outlined in the agreement.";
   let inner="";
-  if(t.id==="agreement-signed-a")inner=`${h1(40)}Your agreement is signed</h1>
-${hi("20px 0 10px")}
-<p style="margin:0;${body}">${thanks}</p>
+  if(t.id==="agreement-signed-a")inner=`${head("Your agreement is signed",40)}
+${hi(mt+" 0 10px")}
+<p style="margin:${grt?"0":mt} 0 0;${body}">${thanks}</p>
 ${gap(40)}${button()}
 <p style="margin:12px 0 0;${body}">or paste this link into your browser:<br><a href="${url}" target="_blank" style="color:#000000;text-decoration:underline">${url}</a></p>`;
   if(t.id==="agreement-signed-b")inner=`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="text-align:center">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td style="border:1px dashed #a8a8a8;padding:5px 10px;font-family:${EF.mono};font-weight:500;font-size:10px;line-height:11px;letter-spacing:0.8px;color:#727272">AGREEMENT / EXECUTED</td></tr></table>
-${gap(12)}${h1(36,1)}Your agreement is signed</h1>
-<!--[if mso]><table role="presentation" width="424" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]--><table role="presentation" class="rp-narrow" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:424px;margin:0 auto"><tr><td style="padding-top:12px;text-align:center">${hi("0 0 4px")}<p style="margin:0;${body}">${thanks}</p></td></tr></table><!--[if mso]></td></tr></table><![endif]-->
+${hdr?`${gap(12)}${h1(36,1)}Your agreement is signed</h1>`:""}
+<!--[if mso]><table role="presentation" width="424" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]--><table role="presentation" class="rp-narrow" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:424px;margin:0 auto"><tr><td style="padding-top:${hdr?12:16}px;text-align:center">${hi("0 0 4px")}<p style="margin:0;${body}">${thanks}</p></td></tr></table><!--[if mso]></td></tr></table><![endif]-->
 ${gap(40)}
 <!--[if mso]><table role="presentation" width="424" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]--><table role="presentation" class="rp-narrow" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:424px;margin:0 auto;background:#ffffff;border:1px dashed #e1e1e1;border-collapse:separate"><tr><td align="center" class="rp-box" style="padding:20px 24px;text-align:center">
 <p style="margin:0 0 16px;font-family:${EF.mono};font-size:10px;line-height:14px;letter-spacing:0.2px;color:#646464">ACCESS YOUR DATA PORTAL</p>
@@ -1118,9 +1127,9 @@ ${button(1)}
 <p style="margin:16px 0 0;font-family:${EF.body};font-size:14px;line-height:20px;letter-spacing:-0.42px;color:#646464">or paste this link into your browser:<br><a href="${url}" target="_blank" style="color:#000000;text-decoration:underline;word-break:break-word">${url}</a></p>
 </td></tr></table><!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>`;
-  if(t.id==="no-offer")inner=`${h1(40)}We won’t be making an offer for your data.</h1>
-${hi("20px 0 10px")}
-<p style="margin:0 0 10px;${body}">Thanks for taking the time to go through the evaluation with us, and for connecting as much as you did.</p>
+  if(t.id==="no-offer")inner=`${head("We won’t be making an offer for your data.",40)}
+${hi(mt+" 0 10px")}
+<p style="margin:${grt?"0":mt} 0 10px;${body}">Thanks for taking the time to go through the evaluation with us, and for connecting as much as you did.</p>
 <p style="margin:0 0 10px;${body}">We’ve reviewed what you shared and we won’t be making an offer in this case. The volumes across your engineering and communications tools are lower than the range we can currently place with buyers, so we would not be able to put a number on it that was worth your time.</p>
 <p style="margin:0 0 10px;${body}">Nothing you sent is being kept. Your connected accounts have been disconnected and the files you uploaded will be deleted.</p>
 <p style="margin:0;${body}">I’m sorry not to have better news. If your situation changes, or if you think we’ve read the numbers wrong, reply to this and I’ll take another look.</p>`;
@@ -1166,10 +1175,11 @@ async function copyRich(html,plain,done){
   toast(ok?done:"Copy failed. Download the .html file instead.")}
 function shadowOf(id){const host=document.getElementById(id);return host?(host.shadowRoot||host.attachShadow({mode:"open"})):null}
 function renderEmailPreview(){const r=shadowOf("em-host");if(!r)return;
-  r.innerHTML=`<style>:host{display:block}${EMAIL_CSS}</style>`+emailCard(EMAILS[emTab],{base:"email/",vars:EMAIL_VARS[emMode],head:EF.preview})}
+  r.innerHTML=`<style>:host{display:block}${EMAIL_CSS}</style>`+emailCard(EMAILS[emTab],{base:"email/",vars:EMAIL_VARS[emMode],head:EF.preview,show:emShow})}
 function setEmTab(i,focus){emTab=i;const t=$("#em-tabs");if(!t)return;t.style.setProperty("--k",i);
   $$("[data-em-tab]",t).forEach((b,k)=>{b.setAttribute("aria-selected",k===i);b.tabIndex=k===i?0:-1});renderEmailPreview();if(focus)$$("[data-em-tab]",t)[i].focus()}
-const emailOut=()=>({t:EMAILS[emTab],o:{...imgOut(),vars:EMAIL_VARS[emMode]}});
+const emailOut=()=>({t:EMAILS[emTab],o:{...imgOut(),vars:EMAIL_VARS[emMode],show:emShow}});
+const emSuffix=()=>(emShow.header?"":"-no-header")+(emShow.greeting?"":"-no-greeting")+(emMode==="tags"?"":"-sample");
 const sigOut=()=>{const o=imgOut();return sigHTML(o.base,"",o.alt)};
 
 /* signature: what people type stays in this browser only */
@@ -1232,11 +1242,12 @@ function renderResources(ch){
       <div class="card fold"><small>ZIP · 27 MB</small><h3>Mockups</h3><p>All fifteen applications as full-resolution PNG.</p>${dlBtn("mockups","Download")}</div>
       <div class="card fold"><small>MD</small><h3>Files for AI tools</h3><p>The brand brief, DESIGN.md and brand.md, for assistants and coding agents.</p>${dlBtn("ai","Download")}</div>
     </div></div></section>
-  <section class="gp" id="p-7.3" data-sub="7.3">${metaRow("7.3","",ch.pages[2][2])}<div class="gp-grid"><div class="gp-copy"><h2>Email templates</h2><p>The product emails Replay sends. Copy the HTML into your email platform, or copy the rendered email to paste into a message.</p><p>Switch to merge tags to see where your platform fills in each recipient’s details.</p></div>
+  <section class="gp" id="p-7.3" data-sub="7.3">${metaRow("7.3","",ch.pages[2][2])}<div class="gp-grid"><div class="gp-copy"><h2>Email templates</h2><p>The product emails Replay sends. Copy the HTML into your email platform, or copy the rendered email to paste into a message.</p><p>Switch to merge tags to see where your platform fills in each recipient’s details. Untick Header or Greeting to see an email without its heading or the “Hi” line.</p></div>
     <div><div class="tabs" id="em-tabs" role="tablist" aria-label="Email templates" style="--n:${EMAILS.length};--k:${emTab}"><span class="tab-ind" aria-hidden="true"></span>${EMAILS.map((t,i)=>`<button role="tab" id="em-tab-${t.id}" aria-selected="${i===emTab}" tabindex="${i===emTab?0:-1}" data-em-tab="${i}">${esc(t.label)}</button>`).join("")}</div>
     <div class="mailbar"><div class="row"><span class="lbl">Fill with</span><span class="seg" role="group" aria-label="Fill with">${[["sample","Sample text"],["tags","Merge tags"]].map(([k,l])=>`<button data-em-mode="${k}" aria-pressed="${k===emMode}">${l}</button>`).join("")}</span></div>
-      <div class="row"><button class="btn solid" data-em-copy="html">${ICON.copy}Copy HTML</button><button class="btn" data-em-copy="rich">${ICON.copy}Copy for email</button><button class="btn" data-em-dl>${ICON.dl}Download .html</button></div></div>
+      <div class="row" role="group" aria-label="Show"><span class="lbl">Show</span>${[["header","Header"],["greeting","Greeting"]].map(([k,l])=>`<label class="chk"><input type="checkbox" data-em-show="${k}"${emShow[k]?" checked":""}>${l}</label>`).join("")}</div></div>
     <div class="mailstage"><div class="mail-host" id="em-host"></div></div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn solid" data-em-copy="html">${ICON.copy}Copy HTML</button><button class="btn" data-em-copy="rich">${ICON.copy}Copy for email</button><button class="btn" data-em-dl>${ICON.dl}Download .html</button></div>
     <p class="mailnote" data-host-status>${hostStatus()}</p><p class="mailnote">Headings use STK Bureau Serif only where it is installed; Apple Mail and iOS show Newsreader, and Gmail and Outlook show Georgia. The preview shows Newsreader.</p></div></div></section>
   <section class="gp" id="p-7.4" data-sub="7.4">${metaRow("7.4","",ch.pages[3][2])}<div class="gp-grid"><div class="gp-copy"><h2>Email signature</h2><p>Fill in your details and choose the Replay mark or your photo. Copy the signature, then paste it into your email settings.</p><p>Gmail: Settings, See all settings, Signature. Apple Mail: Settings, Signatures. Outlook: Settings, Accounts, Signatures.</p></div>
     <div><div class="mailstage"><div class="mail-host sig" id="sig-host"></div></div>
@@ -1349,7 +1360,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.emTab!==undefined){setEmTab(+t.dataset.emTab);return}
   if(t.dataset.emMode){emMode=t.dataset.emMode;$$("[data-em-mode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.emMode===emMode));renderEmailPreview();return}
   if(t.dataset.emCopy){const{t:tp,o}=emailOut();if(t.dataset.emCopy==="html")copyText(emailDoc(tp,o),`${tp.label} HTML`);else{const card=emailCard(tp,o);copyRich(card,plainOf(card),"Copied the email. Paste it into a message.")}return}
-  if(t.hasAttribute("data-em-dl")){const{t:tp,o}=emailOut();saveFile(`replay-email-${tp.id}${emMode==="tags"?"":"-sample"}.html`,emailDoc(tp,o));return}
+  if(t.hasAttribute("data-em-dl")){const{t:tp,o}=emailOut();saveFile(`replay-email-${tp.id}${emSuffix()}.html`,emailDoc(tp,o));return}
   if(t.dataset.sigImg){sig.image=t.dataset.sigImg;saveSig();syncSigUI();renderSigPreview();return}
   if(t.hasAttribute("data-sig-upload")){const f=$("#sig-file");if(f)f.click();return}
   if(t.hasAttribute("data-sig-photo-dl")){if(sigUpload)saveFile("signature-photo.jpg",dataToBlob(sigUpload));return}
@@ -1380,7 +1391,7 @@ document.addEventListener("click",e=>{
     $$("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.themeSet===v));return}
 });
 document.addEventListener("click",e=>{if(e.target.id==="lb"||e.target.classList.contains("lb-stage"))lbClose()});
-document.addEventListener("input",e=>{const el=e.target;if(el.dataset&&el.dataset.sig){sig[el.dataset.sig]=el.value;saveSig();renderSigPreview()}});
+document.addEventListener("input",e=>{const el=e.target;if(el.dataset&&el.dataset.emShow){emShow[el.dataset.emShow]=el.checked;renderEmailPreview();return}if(el.dataset&&el.dataset.sig){sig[el.dataset.sig]=el.value;saveSig();renderSigPreview()}});
 document.addEventListener("change",async e=>{const el=e.target;if(el.id!=="sig-file"||!el.files||!el.files[0])return;
   try{sigUpload=await prepPhoto(el.files[0]);sig.image="photo";saveSig();syncSigUI();renderSigPreview();toast("Photo added")}catch(err){toast("Couldn't read that image. Try a JPG or PNG.")}el.value=""});
 $("#menu-btn").addEventListener("click",()=>{const o=document.body.classList.toggle("nav-open");$("#menu-btn").setAttribute("aria-expanded",o)});
